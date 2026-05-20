@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小进度 - 盈利模式方案</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f7;
+            color: #1d1d1f;
+            padding: 40px 20px;
+        }
+        .container { max-width: 420px; margin: 0 auto; }
+
+        /* Header */
+        .header { text-align: center; margin-bottom: 36px; }
+        .header h1 { font-size: 28px; font-weight: 700; margin-bottom: 6px; }
+        .header p { color: #86868b; font-size: 15px; line-height: 1.5; }
+        .header .brand { color: #007aff; }
+
+        /* Section Title */
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #86868b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 32px 0 12px 0;
+            text-align: center;
+        }
+
+        /* Phone Frame */
+        .phone-frame {
+            width: 100%;
+            max-width: 375px;
+            margin: 0 auto 24px;
+            background: #fff;
+            border-radius: 24px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+            overflow: hidden;
+            position: relative;
+        }
+        .phone-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 14px 20px 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .phone-header .title {
+            font-size: 17px;
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+        .phone-content { padding: 16px 20px 20px; min-height: 480px; }
+
+        /* Project Row Mock */
+        .project-row {
+            padding: 14px 0;
+            border-bottom: 1px solid #f2f2f2;
+        }
+        .project-row:last-child { border-bottom: none; }
+        .project-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .progress-track {
+            height: 6px;
+            background: #e8e8ed;
+            border-radius: 3px;
+            margin-bottom: 4px;
+            position: relative;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            position: relative;
+        }
+        .progress-knob {
+            position: absolute;
+            right: -10px;
+            top: -9px;
+            width: 24px;
+            height: 24px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+        }
+        .progress-label {
+            font-size: 12px;
+            color: #86868b;
+            text-align: right;
+        }
+
+        /* Locked overlay */
+        .locked-row {
+            position: relative;
+            opacity: 0.5;
+        }
+        .locked-row .project-name {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .locked-row .project-name::after {
+            content: "🔒";
+            font-size: 14px;
+        }
+
+        /* Upgrade Banner */
+        .upgrade-banner {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #fff;
+            padding: 14px 16px;
+            border-radius: 14px;
+            margin-top: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .upgrade-banner:hover { transform: scale(1.02); }
+        .upgrade-banner .text { font-size: 14px; font-weight: 600; }
+        .upgrade-banner .arrow { font-size: 18px; opacity: 0.7; }
+        .locked-badge {
+            display: inline-block;
+            background: #f2f2f7;
+            color: #86868b;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 6px;
+        }
+
+        /* Paywall Modal */
+        .paywall-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 1000;
+            align-items: flex-end;
+            justify-content: center;
+        }
+        .paywall-overlay.active { display: flex; }
+        .paywall-sheet {
+            background: #fff;
+            border-radius: 24px 24px 0 0;
+            width: 100%;
+            max-width: 400px;
+            padding: 28px 24px 32px;
+            animation: slideUp 0.35s ease-out;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        .paywall-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .paywall-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .paywall-header p {
+            font-size: 15px;
+            color: #86868b;
+            line-height: 1.5;
+        }
+
+        /* Plan Cards */
+        .plan-grid { display: flex; flex-direction: column; gap: 12px; }
+        .plan-card {
+            border: 2px solid #e8e8ed;
+            border-radius: 16px;
+            padding: 16px 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .plan-card:hover { border-color: #c7c7cc; }
+        .plan-card.selected {
+            border-color: #007aff;
+            background: #f0f7ff;
+        }
+        .plan-card.recommended::before {
+            content: "BEST CHOICE";
+            position: absolute;
+            top: -10px;
+            right: 16px;
+            background: #007aff;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 10px;
+            border-radius: 10px;
+            letter-spacing: 0.5px;
+        }
+        .plan-card .plan-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        .plan-card .plan-desc {
+            font-size: 13px;
+            color: #86868b;
+        }
+        .plan-card .plan-price {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1d1d1f;
+            text-align: right;
+        }
+        .plan-card .plan-price small {
+            font-size: 13px;
+            font-weight: 400;
+            color: #86868b;
+        }
+        .plan-card .plan-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .plan-card .plan-badge {
+            display: inline-block;
+            background: #e8f5e9;
+            color: #2e7d32;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .purchase-btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            background: #007aff;
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: opacity 0.2s;
+        }
+        .purchase-btn:hover { opacity: 0.9; }
+        .purchase-btn:disabled { opacity: 0.4; cursor: default; }
+
+        .restore-link {
+            display: block;
+            text-align: center;
+            color: #86868b;
+            font-size: 13px;
+            margin-top: 14px;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 14px;
+            right: 18px;
+            font-size: 22px;
+            color: #86868b;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+
+        /* Feature comparison */
+        .feature-table {
+            width: 100%;
+            margin-bottom: 20px;
+            border-collapse: collapse;
+        }
+        .feature-table th, .feature-table td {
+            padding: 8px 4px;
+            text-align: center;
+            font-size: 14px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .feature-table th { font-weight: 600; color: #1d1d1f; }
+        .feature-table td:first-child { text-align: left; color: #515154; }
+        .feature-table .check { color: #34c759; font-size: 16px; }
+        .feature-table .cross { color: #c7c7cc; font-size: 14px; }
+        .feature-table .free-col { background: #f9f9fb; }
+        .feature-table .pro-col { background: #f0f7ff; }
+
+        /* Tab switch */
+        .tab-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .tab {
+            flex: 1;
+            padding: 8px;
+            text-align: center;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            background: #f2f2f7;
+            color: #86868b;
+            transition: all 0.2s;
+        }
+        .tab.active {
+            background: #007aff;
+            color: #fff;
+        }
+
+        /* Approach Cards */
+        .approach-card {
+            background: #fff;
+            border: 1px solid #e8e8ed;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 14px;
+            transition: all 0.2s;
+        }
+        .approach-card:hover { border-color: #007aff; }
+        .approach-card .approach-num {
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            line-height: 28px;
+            text-align: center;
+            background: #f0f7ff;
+            color: #007aff;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 14px;
+            margin-right: 8px;
+        }
+        .approach-card .approach-title {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .approach-card .approach-desc {
+            font-size: 14px;
+            color: #515154;
+            line-height: 1.6;
+        }
+        .approach-card .approach-tag {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 8px;
+            margin-top: 8px;
+            margin-right: 6px;
+        }
+        .tag-recommend { background: #e8f5e9; color: #2e7d32; }
+        .tag-alt { background: #fff3e0; color: #e65100; }
+        .tag-simple { background: #f3e8ff; color: #7b1fa2; }
+        .approach-card .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+        .approach-card .pros { color: #2e7d32; }
+        .approach-card .cons { color: #c62828; }
+        .approach-card .pros li, .approach-card .cons li {
+            margin-bottom: 3px;
+            list-style: none;
+        }
+        .approach-card .pros li::before { content: "+ "; font-weight: 700; }
+        .approach-card .cons li::before { content: "- "; font-weight: 700; }
+
+        .divider {
+            height: 1px;
+            background: #e8e8ed;
+            margin: 28px 0;
+        }
+
+        .number-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            background: #007aff;
+            color: #fff;
+            border-radius: 50%;
+            font-size: 13px;
+            font-weight: 700;
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1><span class="brand">小进度</span> / small Progress</h1>
+        <p>盈利模式方案 · 交互 Demo</p>
+    </div>
+
+    <div class="section-title">📊 同类产品定价参考</div>
+    <div class="approach-card" style="margin-bottom:20px;">
+        <table class="feature-table">
+            <tr><th style="text-align:left">产品</th><th>模式</th><th>定价</th></tr>
+            <tr><td>Things 3</td><td>买断</td><td>¥328</td></tr>
+            <tr><td>Streaks</td><td>买断</td><td>¥30</td></tr>
+            <tr><td>Todoist</td><td>订阅</td><td>¥36/月</td></tr>
+            <tr><td>Habit Tracker</td><td>买断</td><td>¥22</td></tr>
+        </table>
+        <div style="font-size:13px;color:#86868b;text-align:center;">
+            工具类 App 最优实践：<strong>Freemium + 买断制</strong> 转化率最高
+        </div>
+    </div>
+
+    <div class="section-title">📱 三种方案对比</div>
+
+    <div class="approach-card" style="border-color:#007aff;background:#f8fbff;">
+        <div>
+            <span class="approach-num" style="background:#007aff;color:#fff;">✓</span>
+            <span class="approach-title" style="color:#007aff;">推荐方案：Freemium + 项目数量解锁</span>
+        </div>
+        <div class="approach-desc">
+            <strong>免费版：3 个项目</strong> — 够用但不爽<br>
+            <strong>Pro 买断：¥22 / $2.99</strong> — 无限项目 + 未来高级功能
+        </div>
+        <div class="pros-cons">
+            <ul class="pros">
+                <li>免费版有真实价值，转化自然</li>
+                <li>买断制符合工具类预期</li>
+                <li>开发成本最低，改一行代码即可</li>
+                <li>3 个项目限制是天然的升级诱因</li>
+            </ul>
+            <ul class="cons">
+                <li>无持续收入</li>
+                <li>3 项目限制可能让重度用户流失</li>
+            </ul>
+        </div>
+        <span class="approach-tag tag-recommend">推荐</span>
+        <span class="approach-tag" style="background:#e3f2fd;color:#1565c0;">最低开发成本</span>
+    </div>
+
+    <div class="approach-card">
+        <div>
+            <span class="approach-num">2</span>
+            <span class="approach-title">订阅制：¥6/月 或 ¥48/年</span>
+        </div>
+        <div class="approach-desc">
+            所有功能可用，但需要持续订阅。免费版限制项目数（2 个）或限制功能（无自定义颜色）。
+        </div>
+        <div class="pros-cons">
+            <ul class="pros">
+                <li>稳定持续收入</li>
+                <li>长期价值更高</li>
+            </ul>
+            <ul class="cons">
+                <li>工具类 App 订阅接受度低</li>
+                <li>功能较简单，用户不愿持续付费</li>
+                <li>需要 StoreKit 订阅管理</li>
+            </ul>
+        </div>
+        <span class="approach-tag tag-alt">备选</span>
+    </div>
+
+    <div class="approach-card">
+        <div>
+            <span class="approach-num">3</span>
+            <span class="approach-title">全部免费 + 打赏/小费</span>
+        </div>
+        <div class="approach-desc">
+            保持完全免费，在设置页加一个 "请作者喝咖啡" 的 donation 入口。¥6 / ¥12 / ¥18。
+        </div>
+        <div class="pros-cons">
+            <ul class="pros">
+                <li>用户体验最好，无任何限制</li>
+                <li>无 App Review 被拒风险</li>
+            </ul>
+            <ul class="cons">
+                <li>打赏转化率极低（< 0.5%）</li>
+                <li>几乎不产生收入</li>
+            </ul>
+        </div>
+        <span class="approach-tag tag-simple">简单</span>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-title">🎬 推荐方案交互 Demo</div>
+
+    <!-- Tab Switch -->
+    <div class="tab-bar">
+        <div class="tab active" onclick="switchTab('free')">免费版 (2/3 项目)</div>
+        <div class="tab" onclick="switchTab('pro')">Pro 版 (无限)</div>
+    </div>
+
+    <!-- Phone Mock -->
+    <div class="phone-frame" id="phoneFree">
+        <div class="phone-header">
+            <span class="title">小进度</span>
+        </div>
+        <div class="phone-content">
+            <div class="project-row">
+                <div class="project-name" style="color:#007aff;">项目一 <span class="locked-badge">免费</span></div>
+                <div class="progress-track">
+                    <div class="progress-fill" style="width:30%;background:#007aff;">
+                        <div class="progress-knob"></div>
+                    </div>
+                </div>
+                <div class="progress-label">30%</div>
+            </div>
+            <div class="project-row">
+                <div class="project-name" style="color:#34c759;">项目二 <span class="locked-badge">免费</span></div>
+                <div class="progress-track">
+                    <div class="progress-fill" style="width:65%;background:#34c759;">
+                        <div class="progress-knob"></div>
+                    </div>
+                </div>
+                <div class="progress-label">65%</div>
+            </div>
+            <div class="project-row" style="opacity:0.35;">
+                <div class="project-name" style="color:#ff9500;">项目三 🔒</div>
+                <div class="progress-track">
+                    <div class="progress-fill" style="width:45%;background:#ff9500;opacity:0.5;">
+                        <div class="progress-knob" style="opacity:0.5;"></div>
+                    </div>
+                </div>
+                <div class="progress-label">已锁定</div>
+            </div>
+
+            <div class="upgrade-banner" onclick="showPaywall()">
+                <div>
+                    <div class="text">🚀 升级到 Pro</div>
+                    <div style="font-size:12px;opacity:0.7;margin-top:2px;">无限项目 · 仅 ¥22 买断</div>
+                </div>
+                <span class="arrow">→</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="phone-frame" id="phonePro" style="display:none;">
+        <div class="phone-header">
+            <span class="title">小进度 <span style="font-size:12px;font-weight:600;color:#007aff;background:#e8f5e9;padding:2px 8px;border-radius:10px;vertical-align:middle;">PRO</span></span>
+        </div>
+        <div class="phone-content">
+            <div class="project-row">
+                <div class="project-name" style="color:#007aff;">产品迭代</div>
+                <div class="progress-track">
+                    <div class="progress-fill" style="width:75%;background:#007aff;">
+                        <div class="progress-knob"></div>
+                    </div>
+                </div>
+                <div class="progress-label">75%</div>
+            </div>
+            <div class="project-row">
+                <div class="project-name" style="color:#34c759;">健身计划</div>
+                <div class="progress-track">
+                    <div class="progress-fill" style="width:42%;background:#34c759;">
+                        <div class="progress-knob"></div>
+                    </div>
+                </div>
+                <div class="progress-label">42%</div>
+            </div>
+            <div class="project-row">
+                <div class="project-name" style="color:#ff9500;">阅读清单</div>
+                <div class="progress-track">
+                    <div class="progress-fill" style="width:60%;background:#ff9500;">
+                        <div class="progress-knob"></div>
+                    </div>
+                </div>
+                <div class="progress-label">60%</div>
+            </div>
+            <div class="project-row">
+                <div class="project-name" style="color:#af52de;">副业项目</div>
+                <div class="progress-track">
+                    <div class="progress-fill" style="width:20%;background:#af52de;">
+                        <div class="progress-knob"></div>
+                    </div>
+                </div>
+                <div class="progress-label">20%</div>
+            </div>
+            <div class="project-row">
+                <div class="project-name" style="color:#ff6482;">装修进度</div>
+                <div class="progress-track">
+                    <div class="progress-fill" style="width:88%;background:#ff6482;">
+                        <div class="progress-knob"></div>
+                    </div>
+                </div>
+                <div class="progress-label">88%</div>
+            </div>
+            <div style="text-align:center;padding:12px 0 4px;font-size:13px;color:#34c759;font-weight:500;">
+                ✓ 无限项目 · Pro 版
+            </div>
+        </div>
+    </div>
+
+    <!-- Feature comparison -->
+    <div class="section-title" style="margin-top:8px;">📋 功能对比</div>
+    <div style="background:#fff;border-radius:16px;padding:16px 20px;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
+        <table class="feature-table">
+            <tr><th style="text-align:left">功能</th><th class="free-col">免费</th><th class="pro-col">Pro</th></tr>
+            <tr><td>项目数量</td><td class="free-col">最多 3 个</td><td class="pro-col">♾ 无限</td></tr>
+            <tr><td>进度拖拽</td><td class="free-col"><span class="check">✓</span></td><td class="pro-col"><span class="check">✓</span></td></tr>
+            <tr><td>深色/浅色模式</td><td class="free-col"><span class="check">✓</span></td><td class="pro-col"><span class="check">✓</span></td></tr>
+            <tr><td>自定义项目颜色</td><td class="free-col"><span class="check">✓</span></td><td class="pro-col"><span class="check">✓</span></td></tr>
+            <tr><td>排序 / 删除</td><td class="free-col"><span class="check">✓</span></td><td class="pro-col"><span class="check">✓</span></td></tr>
+            <tr><td>未来高级功能</td><td class="free-col"><span class="cross">—</span></td><td class="pro-col"><span class="check">✓</span></td></tr>
+            <tr><td>付费方式</td><td class="free-col">免费</td><td class="pro-col" style="font-weight:600;">¥22 买断</td></tr>
+        </table>
+    </div>
+
+    <!-- Paywall Modal -->
+    <div class="paywall-overlay" id="paywall">
+        <div class="paywall-sheet">
+            <button class="close-btn" onclick="hidePaywall()">✕</button>
+            <div class="paywall-header">
+                <h2>🚀 升级到 Pro</h2>
+                <p>无限项目，释放全部潜力</p>
+            </div>
+
+            <div class="plan-grid">
+                <div class="plan-card selected recommended" id="planLifetime" onclick="selectPlan('lifetime')">
+                    <div class="plan-row">
+                        <div>
+                            <div class="plan-name">
+                                Pro 买断
+                                <span class="plan-badge">一次付费，永久使用</span>
+                            </div>
+                            <div class="plan-desc">无限项目 · 所有功能 · 未来更新</div>
+                        </div>
+                        <div class="plan-price">¥22 <small>买断</small></div>
+                    </div>
+                </div>
+                <div class="plan-card" id="planYearly" onclick="selectPlan('yearly')">
+                    <div class="plan-row">
+                        <div>
+                            <div class="plan-name">Pro 年订阅</div>
+                            <div class="plan-desc">无限项目 · 自动续期</div>
+                        </div>
+                        <div class="plan-price">¥28 <small>/年</small></div>
+                    </div>
+                </div>
+                <div class="plan-card" id="planMonthly" onclick="selectPlan('monthly')">
+                    <div class="plan-row">
+                        <div>
+                            <div class="plan-name">Pro 月订阅</div>
+                            <div class="plan-desc">无限项目 · 随时取消</div>
+                        </div>
+                        <div class="plan-price">¥6 <small>/月</small></div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="purchase-btn" id="purchaseBtn">继续</button>
+            <span class="restore-link" onclick="alert('恢复购买功能，后续实现')">恢复购买</span>
+            <div style="text-align:center;font-size:11px;color:#c7c7cc;margin-top:10px;">
+                付款将通过您的 App Store 账户确认。<br>
+                买断版永久可用，含未来更新。
+            </div>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-title">💡 推荐实施路径</div>
+    <div style="background:#fff;border-radius:16px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
+        <div style="display:flex;align-items:flex-start;margin-bottom:12px;">
+            <span class="number-badge">1</span>
+            <div><strong>引入 StoreKit</strong> — 在 Xcode 中配置 IAP 产品 (com.xiaojindu.pro.lifetime)</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;margin-bottom:12px;">
+            <span class="number-badge">2</span>
+            <div><strong>抽离付费状态</strong> — @AppStorage("isPro") 控制免费/Pro 状态</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;margin-bottom:12px;">
+            <span class="number-badge">3</span>
+            <div><strong>实现项目限制</strong> — addProject() 前判断 projects.count >= 3 && !isPro 时弹出付费页</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;margin-bottom:12px;">
+            <span class="number-badge">4</span>
+            <div><strong>付费页面</strong> — 展示三个方案（推荐买断），使用 StoreKit 的 ProductView</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;">
+            <span class="number-badge">5</span>
+            <div><strong>恢复购买</strong> — 在设置页面添加"恢复购买"按钮，调用 StoreKit 的 restore</div>
+        </div>
+    </div>
+
+    <div style="text-align:center;padding:24px 0 8px;font-size:13px;color:#c7c7cc;">
+        此 Demo 仅用于展示交互方案，非真实 App
+    </div>
+</div>
+
+<script>
+    let selectedPlan = 'lifetime';
+
+    function switchTab(tab) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        if (tab === 'free') {
+            document.querySelectorAll('.tab')[0].classList.add('active');
+            document.getElementById('phoneFree').style.display = 'block';
+            document.getElementById('phonePro').style.display = 'none';
+        } else {
+            document.querySelectorAll('.tab')[1].classList.add('active');
+            document.getElementById('phoneFree').style.display = 'none';
+            document.getElementById('phonePro').style.display = 'block';
+        }
+    }
+
+    function showPaywall() {
+        document.getElementById('paywall').classList.add('active');
+    }
+
+    function hidePaywall() {
+        document.getElementById('paywall').classList.remove('active');
+    }
+
+    function selectPlan(plan) {
+        selectedPlan = plan;
+        document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+        document.getElementById('plan' + plan.charAt(0).toUpperCase() + plan.slice(1)).classList.add('selected');
+
+        const labels = { lifetime: '购买 Pro 买断 (¥22)', yearly: '订阅 Pro 年费 (¥28/年)', monthly: '订阅 Pro 月费 (¥6/月)' };
+        document.getElementById('purchaseBtn').textContent = labels[plan];
+    }
+
+    document.getElementById('purchaseBtn').addEventListener('click', function() {
+        const prices = { lifetime: '¥22', yearly: '¥28/年', monthly: '¥6/月' };
+        this.textContent = '处理中...';
+        this.disabled = true;
+        setTimeout(() => {
+            alert(`🎉 购买成功！${prices[selectedPlan]}\n\n(这是交互 Demo，实际购买将在 App 内通过 StoreKit 完成)`);
+            this.textContent = '✓ 已购买';
+            hidePaywall();
+            switchTab('pro');
+        }, 1200);
+    });
+
+    // Click overlay to close
+    document.getElementById('paywall').addEventListener('click', function(e) {
+        if (e.target === this) hidePaywall();
+    });
+</script>
+</body>
+</html>
